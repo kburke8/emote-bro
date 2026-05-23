@@ -1,0 +1,1962 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EmoteBros — Game Design Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ---------- THEME TOKENS ---------- */
+:root {
+  --bg: #f6f3ff;
+  --bg-2: #ffffff;
+  --bg-3: #efeaff;
+  --ink: #1d1539;
+  --ink-2: #4b3d75;
+  --ink-3: #7a6ba0;
+  --line: #e5dcff;
+  --line-2: #d6c9ff;
+  --primary: #7c3aed;
+  --primary-2: #a855f7;
+  --accent: #06b6d4;
+  --hot: #ec4899;
+  --gold: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+  --carpet: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  --hero: linear-gradient(135deg, #7c3aed 0%, #a855f7 35%, #ec4899 70%, #f59e0b 100%);
+  --card-shadow: 0 4px 20px rgba(124, 58, 237, 0.08), 0 1px 3px rgba(124, 58, 237, 0.06);
+  --card-shadow-hover: 0 12px 32px rgba(124, 58, 237, 0.18), 0 2px 6px rgba(124, 58, 237, 0.1);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-pill: 999px;
+}
+[data-theme="dark"] {
+  --bg: #0f0a1f;
+  --bg-2: #1a1233;
+  --bg-3: #251947;
+  --ink: #f3eeff;
+  --ink-2: #c5b8e8;
+  --ink-3: #8c7eb5;
+  --line: #2e2152;
+  --line-2: #3d2c6b;
+  --primary: #a855f7;
+  --primary-2: #c084fc;
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --card-shadow-hover: 0 12px 32px rgba(168, 85, 247, 0.25), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- BASE ---------- */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+body {
+  margin: 0;
+  font-family: 'Fredoka', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.6;
+  font-weight: 400;
+  font-size: 16px;
+  transition: background 0.3s, color 0.3s;
+}
+code, pre { font-family: 'JetBrains Mono', monospace; }
+
+/* ---------- TOP BAR ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+[data-theme="dark"] .topbar { background: rgba(15, 10, 31, 0.85); }
+.topbar-title {
+  font-weight: 700;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.topbar-title .logo {
+  width: 32px; height: 32px;
+  background: var(--hero);
+  border-radius: 10px;
+  display: grid; place-items: center;
+  font-size: 18px;
+}
+.search-wrap {
+  flex: 1;
+  max-width: 420px;
+  position: relative;
+}
+.search {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--bg-2);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15); }
+.search-wrap::before {
+  content: "🔍";
+  position: absolute;
+  left: 12px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  opacity: 0.6;
+}
+.iconbtn {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.2s;
+}
+.iconbtn:hover { border-color: var(--primary); color: var(--primary); }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  max-width: 1400px;
+  margin: 0 auto;
+  gap: 32px;
+  padding: 32px 24px;
+}
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+}
+
+/* ---------- SIDEBAR ---------- */
+.sidebar {
+  position: sticky;
+  top: 80px;
+  align-self: start;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  padding-right: 8px;
+}
+.sidebar-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 12px 12px;
+}
+.toc {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.toc li a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  color: var(--ink-2);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.toc li a:hover { background: var(--bg-3); color: var(--ink); }
+.toc li a.active { background: var(--bg-3); color: var(--primary); font-weight: 600; }
+.toc li a .num {
+  font-size: 11px;
+  color: var(--ink-3);
+  font-weight: 600;
+  width: 20px;
+  text-align: right;
+}
+
+/* ---------- MAIN ---------- */
+main { min-width: 0; }
+
+/* ---------- BUILD STATUS BANNER ---------- */
+.build-status {
+  background: linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #7c3aed 100%);
+  border-radius: 20px;
+  padding: 28px 32px;
+  color: white;
+  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: center;
+  box-shadow: 0 8px 28px rgba(16, 185, 129, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+.build-status::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.18), transparent 50%);
+  pointer-events: none;
+}
+.build-status .left { position: relative; z-index: 1; }
+.build-status .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(10px);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.build-status .tag .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 8px #4ade80;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.build-status h2 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.build-status p {
+  margin: 0;
+  font-size: 15px;
+  opacity: 0.95;
+  max-width: 560px;
+}
+.build-status .play-btn {
+  position: relative;
+  z-index: 1;
+  background: white;
+  color: #7c3aed;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  transition: transform 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+.build-status .play-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.3);
+}
+.build-status .play-btn .arrow { transition: transform 0.15s; }
+.build-status .play-btn:hover .arrow { transform: translateX(3px); }
+.build-status .meta-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.build-status .meta-row span {
+  background: rgba(255,255,255,0.18);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+@media (max-width: 700px) {
+  .build-status { grid-template-columns: 1fr; }
+}
+
+/* ---------- IMPLEMENTED BADGE ---------- */
+.impl-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.impl-badge.partial {
+  background: linear-gradient(135deg, #f59e0b, #ec4899);
+}
+.impl-badge::before {
+  content: "✓";
+  font-size: 10px;
+}
+.impl-badge.partial::before { content: "◐"; }
+.section-header { gap: 12px; }
+.section-header .impl-badge { order: 3; }
+.section-header .num-badge { order: 4; }
+.section-header .chev { order: 5; }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: var(--hero);
+  border-radius: 24px;
+  padding: 48px 40px;
+  color: white;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.2), transparent 50%);
+  pointer-events: none;
+}
+.hero h1 {
+  margin: 0 0 8px;
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.hero .tag {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.hero p {
+  margin: 0;
+  font-size: 18px;
+  max-width: 720px;
+  opacity: 0.95;
+}
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 32px;
+  position: relative;
+  z-index: 1;
+}
+.hero-stat {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.25);
+  padding: 16px;
+  border-radius: var(--radius);
+  text-align: center;
+}
+.hero-stat .v {
+  font-size: 28px;
+  font-weight: 700;
+  display: block;
+  line-height: 1;
+}
+.hero-stat .l {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+  margin-top: 6px;
+  display: block;
+}
+
+/* ---------- SECTIONS ---------- */
+.section {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 0.2s;
+}
+.section:hover { box-shadow: var(--card-shadow-hover); }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 28px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+.section.open .section-header { border-bottom-color: var(--line); }
+.section-header:hover { background: var(--bg-3); }
+.section-icon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  display: grid; place-items: center;
+  font-size: 20px;
+  background: var(--bg-3);
+  flex-shrink: 0;
+}
+.section-header h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  flex: 1;
+}
+.section-header .num-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-3);
+  background: var(--bg-3);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+.section-header .chev {
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  color: var(--ink-3);
+  transition: transform 0.25s;
+}
+.section.open .section-header .chev { transform: rotate(90deg); }
+.section-body {
+  display: none;
+  padding: 8px 28px 28px;
+}
+.section.open .section-body { display: block; }
+
+/* ---------- TYPOGRAPHY ---------- */
+.section-body h3 {
+  font-size: 18px;
+  margin: 24px 0 12px;
+  color: var(--ink);
+  font-weight: 600;
+}
+.section-body h4 {
+  font-size: 15px;
+  margin: 18px 0 8px;
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.section-body p { margin: 0 0 12px; color: var(--ink-2); }
+.section-body ul, .section-body ol { padding-left: 22px; margin: 8px 0 16px; }
+.section-body li { margin: 4px 0; color: var(--ink-2); }
+.section-body strong { color: var(--ink); font-weight: 600; }
+.section-body blockquote {
+  border-left: 3px solid var(--primary);
+  background: var(--bg-3);
+  margin: 12px 0;
+  padding: 12px 16px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--ink-2);
+  font-style: italic;
+}
+.section-body a { color: var(--primary); }
+
+/* ---------- TABLES ---------- */
+.tbl-wrap {
+  margin: 12px 0 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-2);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+th {
+  text-align: left;
+  background: var(--bg-3);
+  padding: 12px 16px;
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--line);
+}
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { background: var(--line); }
+th.sortable::after {
+  content: " ⇅";
+  opacity: 0.4;
+  font-size: 11px;
+}
+th.sortable.asc::after { content: " ↑"; opacity: 1; color: var(--primary); }
+th.sortable.desc::after { content: " ↓"; opacity: 1; color: var(--primary); }
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg-3); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- RARITY CHIPS ---------- */
+.rarity {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+}
+.rarity.common { background: #e5e7eb; color: #374151; }
+.rarity.uncommon { background: #d1fae5; color: #065f46; }
+.rarity.rare { background: #dbeafe; color: #1e3a8a; }
+.rarity.epic { background: #ede9fe; color: #5b21b6; }
+.rarity.secret { background: #fce7f3; color: #9d174d; }
+.rarity.evolved { background: #fef3c7; color: #92400e; }
+[data-theme="dark"] .rarity.common { background: #374151; color: #d1d5db; }
+[data-theme="dark"] .rarity.uncommon { background: #065f46; color: #6ee7b7; }
+[data-theme="dark"] .rarity.rare { background: #1e3a8a; color: #93c5fd; }
+[data-theme="dark"] .rarity.epic { background: #5b21b6; color: #ddd6fe; }
+[data-theme="dark"] .rarity.secret { background: #9d174d; color: #fbcfe8; }
+[data-theme="dark"] .rarity.evolved { background: #92400e; color: #fde68a; }
+
+/* ---------- CODE BLOCKS ---------- */
+.codeblock {
+  position: relative;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  margin: 12px 0 20px;
+  overflow: hidden;
+}
+.codeblock pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.copybtn {
+  position: absolute;
+  top: 8px; right: 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--ink-2);
+  transition: all 0.2s;
+}
+.copybtn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+.copybtn.copied { background: var(--green); color: white; border-color: var(--green); }
+
+/* ---------- CARD GRID ---------- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.card {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.card .ico { font-size: 28px; }
+.card .ttl { font-weight: 600; color: var(--ink); }
+.card .sub { font-size: 13px; color: var(--ink-3); }
+
+/* ---------- DIAGRAMS ---------- */
+.diagram {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 24px;
+  margin: 16px 0 24px;
+}
+.diagram svg { width: 100%; height: auto; display: block; }
+.diagram-caption {
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: 12px;
+  font-style: italic;
+}
+
+/* ---------- MVP CHECKLIST ---------- */
+.checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+.checklist label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.checklist label:hover { border-color: var(--primary); }
+.checklist input[type="checkbox"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--line-2);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.15s;
+}
+.checklist input[type="checkbox"]:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.checklist input[type="checkbox"]:checked::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+}
+.checklist input[type="checkbox"]:checked + .check-label {
+  text-decoration: line-through;
+  color: var(--ink-3);
+}
+.mvp-progress {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin: 12px 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.mvp-bar {
+  flex: 1;
+  height: 12px;
+  background: var(--line);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.mvp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--hot));
+  border-radius: var(--radius-pill);
+  transition: width 0.3s;
+  width: 0%;
+}
+.mvp-progress .count {
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- CALLOUT ---------- */
+.callout {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(236, 72, 153, 0.05));
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin: 14px 0;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.callout .cico { font-size: 22px; flex-shrink: 0; }
+.callout p { margin: 0; color: var(--ink); }
+
+/* ---------- SCROLL TO TOP ---------- */
+.totop {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 40;
+}
+.totop.show { opacity: 1; pointer-events: auto; }
+.totop:hover { transform: translateY(-2px); }
+
+/* ---------- NO-RESULTS ---------- */
+.section.hidden { display: none; }
+
+/* ---------- TWO COLS ---------- */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 16px 0;
+}
+@media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ---------- FOOTER ---------- */
+footer {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ink-3);
+  font-size: 14px;
+}
+footer .pitch {
+  max-width: 700px;
+  margin: 0 auto 16px;
+  font-size: 17px;
+  color: var(--ink-2);
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="#top" class="topbar-title"><span class="logo">🎮</span> EmoteBros</a>
+  <div class="search-wrap">
+    <input type="search" id="search" class="search" placeholder="Search the spec…" />
+  </div>
+  <button class="iconbtn" id="expandAll" title="Expand or collapse all sections">▾ All</button>
+  <button class="iconbtn" id="themeToggle" title="Toggle theme">🌙</button>
+</div>
+
+<div class="layout" id="top">
+  <aside class="sidebar">
+    <p class="sidebar-title">Contents</p>
+    <ul class="toc" id="toc"></ul>
+  </aside>
+
+  <main>
+    <section class="hero">
+      <span class="tag">Game Design Spec · v1</span>
+      <h1>EmoteBros</h1>
+      <p>A multiplayer lobby game where you collect funny little characters, earn money over time, evolve them, and steal valuable EmoteBros from other players' bases.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="v">4</span><span class="l">Players / Lobby</span></div>
+        <div class="hero-stat"><span class="v">12</span><span class="l">Base Slots</span></div>
+        <div class="hero-stat"><span class="v">2 min</span><span class="l">Base Lock</span></div>
+        <div class="hero-stat"><span class="v">1 hr</span><span class="l">Event Cadence</span></div>
+        <div class="hero-stat"><span class="v">27</span><span class="l">Spec Sections</span></div>
+        <div class="hero-stat"><span class="v">🟢</span><span class="l">Prototype Live</span></div>
+      </div>
+    </section>
+
+    <!-- ============================== BUILD STATUS ============================== -->
+    <section class="build-status" id="build-status">
+      <div class="left">
+        <span class="tag"><span class="dot"></span> Prototype shipped</span>
+        <h2>🎮 Playable build is ready</h2>
+        <p>A 2D top-down browser prototype covers all 20 MVP features plus mounts, evolutions, lever, and the teleport-lock upgrade. You play against 3 AI rivals who buy, lock, and steal.</p>
+        <div class="meta-row">
+          <span>✅ 20 / 20 MVP</span>
+          <span>🤖 3 AI rivals</span>
+          <span>💾 Auto-save</span>
+          <span>📦 ~2,600 LOC · 8 files</span>
+        </div>
+      </div>
+      <a class="play-btn" href="game.html">▶ Play Now <span class="arrow">→</span></a>
+    </section>
+
+    <!-- ============================== 1. SUMMARY ============================== -->
+    <article class="section open" data-num="1" data-icon="🎯" data-title="Game Summary">
+      <header class="section-header"><div class="section-icon">🎯</div><h2>Game Summary</h2><span class="num-badge">01</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p><strong>EmoteBros</strong> is a multiplayer lobby game where players collect little characters called <strong>EmoteBros</strong>, place them in their base, earn money over time, buy pets and upgrades, defend their base, and try to steal valuable EmoteBros from other players.</p>
+        <p>There is no final "win" condition. The goal is to keep getting richer, collecting better EmoteBros, evolving them, buying better pets and mounts, unlocking VIP areas, and protecting your base from other players.</p>
+        <p>The game is meant to feel like a fun Roblox-style tycoon/collector/stealing game.</p>
+      </div>
+    </article>
+
+    <!-- ============================== 2. CORE LOOP ============================== -->
+    <article class="section open" data-num="2" data-icon="🔁" data-title="Core Game Loop">
+      <header class="section-header"><div class="section-icon">🔁</div><h2>Core Game Loop</h2><span class="impl-badge">Built</span><span class="num-badge">02</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>The basic loop:</p>
+        <div class="diagram">
+          <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Core game loop diagram">
+            <defs>
+              <linearGradient id="loopGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#7c3aed"/>
+                <stop offset="1" stop-color="#ec4899"/>
+              </linearGradient>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/>
+              </marker>
+            </defs>
+            <!-- nodes -->
+            <g font-family="Fredoka, sans-serif" font-size="13" text-anchor="middle">
+              <g><circle cx="120" cy="80" r="48" fill="url(#loopGrad)"/><text x="120" y="76" fill="white" font-weight="600">Join</text><text x="120" y="92" fill="white" font-size="11">Lobby</text></g>
+              <g><circle cx="320" cy="80" r="48" fill="url(#loopGrad)"/><text x="320" y="76" fill="white" font-weight="600">Buy</text><text x="320" y="92" fill="white" font-size="11">EmoteBros</text></g>
+              <g><circle cx="520" cy="80" r="48" fill="url(#loopGrad)"/><text x="520" y="76" fill="white" font-weight="600">Earn</text><text x="520" y="92" fill="white" font-size="11">Coins</text></g>
+              <g><circle cx="680" cy="80" r="48" fill="url(#loopGrad)"/><text x="680" y="76" fill="white" font-weight="600">Collect</text><text x="680" y="92" fill="white" font-size="11">at Slab</text></g>
+              <g><circle cx="680" cy="270" r="48" fill="url(#loopGrad)"/><text x="680" y="266" fill="white" font-weight="600">Defend</text><text x="680" y="282" fill="white" font-size="11">/ Steal</text></g>
+              <g><circle cx="480" cy="270" r="48" fill="url(#loopGrad)"/><text x="480" y="266" fill="white" font-weight="600">Upgrade</text><text x="480" y="282" fill="white" font-size="11">Base</text></g>
+              <g><circle cx="280" cy="270" r="48" fill="url(#loopGrad)"/><text x="280" y="266" fill="white" font-weight="600">Pets &amp;</text><text x="280" y="282" fill="white" font-size="11">Mounts</text></g>
+              <g><circle cx="120" cy="270" r="48" fill="url(#loopGrad)"/><text x="120" y="266" fill="white" font-weight="600">Evolve</text><text x="120" y="282" fill="white" font-size="11">EmoteBros</text></g>
+            </g>
+            <!-- arrows -->
+            <g stroke="#7c3aed" stroke-width="2" fill="none" marker-end="url(#arrow)">
+              <line x1="168" y1="80" x2="272" y2="80"/>
+              <line x1="368" y1="80" x2="472" y2="80"/>
+              <line x1="568" y1="80" x2="632" y2="80"/>
+              <path d="M680 128 Q 720 200 680 222"/>
+              <line x1="632" y1="270" x2="528" y2="270"/>
+              <line x1="432" y1="270" x2="328" y2="270"/>
+              <line x1="232" y1="270" x2="168" y2="270"/>
+              <path d="M120 222 Q 80 150 120 128"/>
+            </g>
+          </svg>
+          <div class="diagram-caption">The continuous loop — there's no end state, just bigger numbers.</div>
+        </div>
+        <ol>
+          <li>Player joins a lobby.</li>
+          <li>Player is assigned one of four bases.</li>
+          <li>EmoteBros spawn on a blue/purple carpet path.</li>
+          <li>Player spends coins to buy EmoteBros.</li>
+          <li>Bought EmoteBros travel to the player's base.</li>
+          <li>Once inside the base, EmoteBros generate money over time.</li>
+          <li>Player steps on their money slab to collect earned money.</li>
+          <li>Player uses money to buy: more EmoteBros, pets, base defenses, guard suits, lock upgrades, lucky blocks, evolutions.</li>
+          <li>Other players can try to steal EmoteBros from bases.</li>
+          <li>Player defends their base using locks, guards, weapons, teleport items, and upgrades.</li>
+          <li>Hourly events, daily spin rewards, VIP zones, and mounts add extra goals.</li>
+        </ol>
+      </div>
+    </article>
+
+    <!-- ============================== 3. PLAYERS & LOBBIES ============================== -->
+    <article class="section open" data-num="3" data-icon="🧑‍🤝‍🧑" data-title="Players and Lobbies">
+      <header class="section-header"><div class="section-icon">🧑‍🤝‍🧑</div><h2>Players and Lobbies</h2><span class="impl-badge">Built</span><span class="num-badge">03</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <h3>Lobby Size</h3>
+        <ul>
+          <li><strong>4 player bases</strong> per lobby</li>
+          <li>Up to <strong>4 active players</strong></li>
+          <li>Spectators could be added later — not needed for v1</li>
+        </ul>
+        <h3>Base Assignment</h3>
+        <p>When a player joins, they're assigned to any empty base. Each base has:</p>
+        <div class="card-grid">
+          <div class="card"><span class="ico">🚪</span><span class="ttl">Entrance</span><span class="sub">The way in</span></div>
+          <div class="card"><span class="ico">🔒</span><span class="ttl">Lock slab</span><span class="sub">2-min protection</span></div>
+          <div class="card"><span class="ico">💰</span><span class="ttl">Money slab</span><span class="sub">Collect earnings</span></div>
+          <div class="card"><span class="ico">🟣</span><span class="ttl">12 slots</span><span class="sub">EmoteBro spots</span></div>
+          <div class="card"><span class="ico">🛡️</span><span class="ttl">Guard positions</span><span class="sub">Place defenders</span></div>
+          <div class="card"><span class="ico">🏷️</span><span class="ttl">Owner label</span><span class="sub">Visible name</span></div>
+          <div class="card"><span class="ico">🐾</span><span class="ttl">Pet area</span><span class="sub">Optional</span></div>
+          <div class="card"><span class="ico">👑</span><span class="ttl">VIP upgrades</span><span class="sub">Optional</span></div>
+        </div>
+        <h3>Leaving the Game</h3>
+        <ul>
+          <li>Player data saves on leave.</li>
+          <li>Base becomes unavailable briefly, then resets for a new player.</li>
+          <li>Saved data: EmoteBros, coins, pets, VIP, mounts, upgrades.</li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- ============================== 4. MAP LAYOUT ============================== -->
+    <article class="section" data-num="4" data-icon="🗺️" data-title="Map Layout">
+      <header class="section-header"><div class="section-icon">🗺️</div><h2>Map Layout</h2><span class="impl-badge">Built</span><span class="num-badge">04</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <div class="diagram">
+          <svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Map layout">
+            <defs>
+              <linearGradient id="carpetGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#6366f1"/>
+                <stop offset="0.5" stop-color="#a855f7"/>
+                <stop offset="1" stop-color="#ec4899"/>
+              </linearGradient>
+            </defs>
+            <!-- background -->
+            <rect x="0" y="0" width="800" height="480" fill="transparent"/>
+            <!-- spawn / shops cluster -->
+            <rect x="280" y="200" width="240" height="80" rx="14" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+            <text x="400" y="230" text-anchor="middle" font-family="Fredoka" font-size="14" font-weight="600" fill="#92400e">Spawn / Shops Hub</text>
+            <text x="400" y="252" text-anchor="middle" font-family="Fredoka" font-size="11" fill="#92400e">Daily Spin · Shop · Pets · Lucky · Mounts · VIP</text>
+            <!-- carpet -->
+            <rect x="80" y="80" width="640" height="40" rx="20" fill="url(#carpetGrad)" opacity="0.85"/>
+            <text x="400" y="105" text-anchor="middle" font-family="Fredoka" font-size="13" font-weight="600" fill="white">⟵ EmoteBro Carpet Path ⟶</text>
+            <!-- lever -->
+            <circle cx="400" cy="155" r="14" fill="#1d1539"/>
+            <text x="400" y="159" text-anchor="middle" font-family="Fredoka" font-size="10" fill="white" font-weight="600">⚙</text>
+            <text x="400" y="180" text-anchor="middle" font-family="Fredoka" font-size="10" fill="#7a6ba0">lever</text>
+            <!-- 4 bases -->
+            <g font-family="Fredoka" font-size="12" font-weight="600">
+              <rect x="40" y="340" width="160" height="100" rx="12" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+              <text x="120" y="370" text-anchor="middle" fill="#5b21b6">🏠 Base 1</text>
+              <text x="120" y="392" text-anchor="middle" font-size="10" fill="#5b21b6">12 slots · 🔒 · 💰</text>
+
+              <rect x="220" y="340" width="160" height="100" rx="12" fill="#fce7f3" stroke="#ec4899" stroke-width="2"/>
+              <text x="300" y="370" text-anchor="middle" fill="#9d174d">🏠 Base 2</text>
+              <text x="300" y="392" text-anchor="middle" font-size="10" fill="#9d174d">12 slots · 🔒 · 💰</text>
+
+              <rect x="420" y="340" width="160" height="100" rx="12" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+              <text x="500" y="370" text-anchor="middle" fill="#1e3a8a">🏠 Base 3</text>
+              <text x="500" y="392" text-anchor="middle" font-size="10" fill="#1e3a8a">12 slots · 🔒 · 💰</text>
+
+              <rect x="600" y="340" width="160" height="100" rx="12" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+              <text x="680" y="370" text-anchor="middle" fill="#065f46">🏠 Base 4</text>
+              <text x="680" y="392" text-anchor="middle" font-size="10" fill="#065f46">12 slots · 🔒 · 💰</text>
+            </g>
+            <!-- VIP -->
+            <rect x="600" y="20" width="160" height="50" rx="12" fill="#1d1539" stroke="#f59e0b" stroke-width="2"/>
+            <text x="680" y="50" text-anchor="middle" font-family="Fredoka" font-size="13" font-weight="700" fill="#f59e0b">👑 VIP AREA</text>
+          </svg>
+          <div class="diagram-caption">Rough map layout — carpet on top, hub in the middle, four player bases below, VIP off to the side.</div>
+        </div>
+
+        <h3>Main Spawn Area</h3>
+        <p>Where players appear when they join. Includes the instructions board, daily spin wheel, shop, pet shop, lucky block shop, mount shop, VIP entrance, and event countdown board.</p>
+
+        <h3>EmoteBro Carpet Path</h3>
+        <p>A blue/purple carpet where EmoteBros appear and move.</p>
+        <ul>
+          <li>EmoteBros spawn at the start of the carpet.</li>
+          <li>They move along the carpet toward the finish.</li>
+          <li>Players can buy them while moving.</li>
+          <li>If an EmoteBro reaches the finish without being bought, it disappears.</li>
+          <li>A lever can change which direction the EmoteBros are moving.</li>
+        </ul>
+
+        <h3>Four Bases</h3>
+        <p>Each lobby has four bases around the map. Each base includes 12 carpet spheres/slots for EmoteBros, a money collection slab, a lock slab, a base entrance, guard slots, owner-only messages, and a base teleport destination.</p>
+
+        <h3>Pet Store</h3>
+        <p>Players buy pets here. Pets increase the amount of money earned.</p>
+
+        <h3>VIP Area</h3>
+        <p>Only VIP players can enter. Has a special carpet, better rewards, double-quality stuff, better EmoteBros, better lucky blocks, better items.</p>
+        <div class="callout"><span class="cico">✨</span><p>Everything in the VIP area should be roughly <strong>2× as good</strong> as normal.</p></div>
+      </div>
+    </article>
+
+    <!-- ============================== 5. EMOTEBROS ============================== -->
+    <article class="section" data-num="5" data-icon="🤪" data-title="EmoteBros">
+      <header class="section-header"><div class="section-icon">🤪</div><h2>EmoteBros</h2><span class="impl-badge">Built</span><span class="num-badge">05</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>EmoteBros are collectible characters that players buy, place in their base, and use to earn money. They are the main collectible and money-making system.</p>
+
+        <h3>Spawning</h3>
+        <p>EmoteBros spawn on the main carpet. Each has: name, rarity, cost, money/sec, appearance, evolution level, sometimes special traits.</p>
+
+        <h3>Example EmoteBros</h3>
+        <div class="tbl-wrap">
+          <table class="sortable-table">
+            <thead><tr>
+              <th class="sortable">Name</th>
+              <th class="sortable">Rarity</th>
+              <th class="sortable num" data-type="num">Cost</th>
+              <th class="sortable num" data-type="num">Money/sec</th>
+            </tr></thead>
+            <tbody>
+              <tr><td>Basic Bro</td><td><span class="rarity common">Common</span></td><td class="num" data-value="25">25</td><td class="num" data-value="1">1</td></tr>
+              <tr><td>Silly Bro</td><td><span class="rarity common">Common</span></td><td class="num" data-value="75">75</td><td class="num" data-value="3">3</td></tr>
+              <tr><td>Cool Bro</td><td><span class="rarity uncommon">Uncommon</span></td><td class="num" data-value="250">250</td><td class="num" data-value="10">10</td></tr>
+              <tr><td>Mega Bro</td><td><span class="rarity rare">Rare</span></td><td class="num" data-value="1000">1,000</td><td class="num" data-value="40">40</td></tr>
+              <tr><td>Secret Bro</td><td><span class="rarity secret">Secret</span></td><td class="num" data-value="999999">???</td><td class="num" data-value="9999">Very high</td></tr>
+              <tr><td>Evolved Bro</td><td><span class="rarity evolved">Evolved</span></td><td class="num" data-value="0">Evolution only</td><td class="num" data-value="100">Higher than original</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Buying an EmoteBro</h3>
+        <ul>
+          <li>If they have enough money: spend it, EmoteBro becomes owned, walks/slides to base, takes next available slot.</li>
+          <li>If no space: show "Your base is full!"</li>
+          <li>If not enough money: show "Not enough coins!"</li>
+        </ul>
+
+        <h3>Base Capacity</h3>
+        <p>Each base has <strong>12 EmoteBro slots</strong>. If all 12 are full, the player must sell one, evolve/combine, upgrade storage later, or replace one. For v1: 12 max, can sell/remove.</p>
+
+        <h3>Money Generation</h3>
+        <p>Each EmoteBro generates money over time. Money is <em>not</em> instantly added to the wallet — it builds up in the base bank. The player must step on the <strong>money slab</strong> to collect.</p>
+        <blockquote>"Collect: 1,250 coins"</blockquote>
+
+        <h3>Evolving EmoteBros</h3>
+        <p>3 of the same EmoteBro can evolve into 1 stronger version. Evolution costs coins or special currency.</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Input</th><th class="num">Cost</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td>3 Basic Bros</td><td class="num">100 coins</td><td>Super Basic Bro</td></tr>
+              <tr><td>3 Cool Bros</td><td class="num">1,000 coins</td><td>Mega Cool Bro</td></tr>
+              <tr><td>3 Mega Bros</td><td class="num">Special currency</td><td>Ultra Mega Bro</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Event EmoteBros</h3>
+        <p>Some events announce special EmoteBros — Secret Egg, Mega EmoteBro, ready-to-evolve EmoteBro. These appear on the carpet during events.</p>
+      </div>
+    </article>
+
+    <!-- ============================== 6. LUCKY BLOCKS ============================== -->
+    <article class="section" data-num="6" data-icon="🎁" data-title="Lucky Blocks">
+      <header class="section-header"><div class="section-icon">🎁</div><h2>Lucky Blocks</h2><span class="impl-badge">Built</span><span class="num-badge">06</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>Lucky blocks hatch EmoteBros.</p>
+
+        <h3>Lucky Block Types</h3>
+        <div class="tbl-wrap">
+          <table class="sortable-table">
+            <thead><tr><th class="sortable">Lucky Block</th><th class="sortable">Cost</th><th class="sortable">Reward Quality</th></tr></thead>
+            <tbody>
+              <tr><td>Normal Lucky Block</td><td>Low</td><td>Common to rare</td></tr>
+              <tr><td>Mega Lucky Block</td><td>High</td><td>Better chance for rare</td></tr>
+              <tr><td>Secret Lucky Block</td><td>Very high / event only</td><td>Chance for secret EmoteBro</td></tr>
+              <tr><td>VIP Lucky Block</td><td>VIP only</td><td>2× better rewards</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Lucky Block Behavior</h3>
+        <ol>
+          <li>Play opening animation.</li>
+          <li>Roll for an EmoteBro.</li>
+          <li>Show the result.</li>
+          <li>Send the EmoteBro to the player's base if there is room.</li>
+          <li>If no room: temporary storage, or ask to replace.</li>
+        </ol>
+
+        <h3>Normal Lucky Block — Chances</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Rarity</th><th class="num">Chance</th></tr></thead>
+            <tbody>
+              <tr><td><span class="rarity common">Common</span></td><td class="num">60%</td></tr>
+              <tr><td><span class="rarity uncommon">Uncommon</span></td><td class="num">25%</td></tr>
+              <tr><td><span class="rarity rare">Rare</span></td><td class="num">10%</td></tr>
+              <tr><td><span class="rarity epic">Epic</span></td><td class="num">4%</td></tr>
+              <tr><td><span class="rarity secret">Secret</span></td><td class="num">1%</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Mega Lucky Block — Chances</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Rarity</th><th class="num">Chance</th></tr></thead>
+            <tbody>
+              <tr><td><span class="rarity common">Common</span></td><td class="num">30%</td></tr>
+              <tr><td><span class="rarity uncommon">Uncommon</span></td><td class="num">30%</td></tr>
+              <tr><td><span class="rarity rare">Rare</span></td><td class="num">25%</td></tr>
+              <tr><td><span class="rarity epic">Epic</span></td><td class="num">12%</td></tr>
+              <tr><td><span class="rarity secret">Secret</span></td><td class="num">3%</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>VIP Lucky Block</h3>
+        <p>Rewards should feel about <strong>2× better</strong> than normal.</p>
+      </div>
+    </article>
+
+    <!-- ============================== 7. BASES ============================== -->
+    <article class="section" data-num="7" data-icon="🏠" data-title="Bases">
+      <header class="section-header"><div class="section-icon">🏠</div><h2>Bases</h2><span class="impl-badge">Built</span><span class="num-badge">07</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <h3>Base Parts</h3>
+        <ul>
+          <li>12 EmoteBro slots</li>
+          <li>Money collection slab</li>
+          <li>Lock slab</li>
+          <li>Entrance</li>
+          <li>Owner label</li>
+          <li>Defense item area</li>
+          <li>Guard positions</li>
+        </ul>
+
+        <h3>Money Slab</h3>
+        <ul>
+          <li>Only the base owner can collect.</li>
+          <li>When the owner steps on it: add stored base money to wallet, reset to 0, play coin sound.</li>
+        </ul>
+
+        <h3>Lock Slab</h3>
+        <p>When the owner steps on the lock slab:</p>
+        <ul>
+          <li>Base locks for <strong>2 minutes</strong>.</li>
+          <li>Other players can't enter.</li>
+          <li>Timer appears above the base / near the door.</li>
+          <li>When the timer ends, the base unlocks.</li>
+        </ul>
+
+        <h3>Owner-Only Messages</h3>
+        <p>When the base becomes unlocked, <em>only the owner</em> sees "Your base is unlocked!" — this message is private. Other players do <strong>not</strong> get a warning.</p>
+      </div>
+    </article>
+
+    <!-- ============================== 8. STEALING ============================== -->
+    <article class="section" data-num="8" data-icon="🦹" data-title="Stealing System">
+      <header class="section-header"><div class="section-icon">🦹</div><h2>Stealing System</h2><span class="impl-badge">Built</span><span class="num-badge">08</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>Players can try to steal EmoteBros from other players' bases.</p>
+
+        <div class="diagram">
+          <svg viewBox="0 0 800 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stealing flow">
+            <defs>
+              <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#ec4899"/>
+              </marker>
+            </defs>
+            <g font-family="Fredoka" font-size="13" text-anchor="middle">
+              <rect x="40" y="80" width="140" height="70" rx="14" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+              <text x="110" y="108" font-weight="600" fill="#5b21b6">1. Approach</text>
+              <text x="110" y="128" font-size="11" fill="#7a6ba0">Base unlocked?</text>
+
+              <rect x="220" y="80" width="140" height="70" rx="14" fill="#fce7f3" stroke="#ec4899" stroke-width="2"/>
+              <text x="290" y="108" font-weight="600" fill="#9d174d">2. Grab</text>
+              <text x="290" y="128" font-size="11" fill="#7a6ba0">EmoteBro carried</text>
+
+              <rect x="400" y="80" width="140" height="70" rx="14" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+              <text x="470" y="108" font-weight="600" fill="#92400e">3. Escape</text>
+              <text x="470" y="128" font-size="11" fill="#7a6ba0">Guards / mace?</text>
+
+              <rect x="580" y="80" width="160" height="70" rx="14" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+              <text x="660" y="108" font-weight="600" fill="#065f46">4. Reach Own Base</text>
+              <text x="660" y="128" font-size="11" fill="#7a6ba0">Steal complete</text>
+            </g>
+            <g stroke="#ec4899" stroke-width="2" fill="none" marker-end="url(#arrow2)">
+              <line x1="180" y1="115" x2="216" y2="115"/>
+              <line x1="360" y1="115" x2="396" y2="115"/>
+              <line x1="540" y1="115" x2="576" y2="115"/>
+            </g>
+            <text x="400" y="200" text-anchor="middle" font-family="Fredoka" font-size="12" fill="#7a6ba0" font-style="italic">If stunned, teleported, or knocked away at any step — the steal fails.</text>
+          </svg>
+          <div class="diagram-caption">Stealing sequence — fail at any step and the EmoteBro is recovered.</div>
+        </div>
+
+        <h3>Basic Stealing</h3>
+        <p>A player can steal an EmoteBro if: the target base is unlocked, the player can reach the EmoteBro, the EmoteBro is not protected by a guard, the thief is not stunned or blocked.</p>
+        <ol>
+          <li>Player interacts with an enemy EmoteBro.</li>
+          <li>EmoteBro becomes "carried" or follows the thief.</li>
+          <li>The thief must get it back to their own base.</li>
+          <li>If successful, the EmoteBro is added to the thief's base.</li>
+          <li>If the thief gets stunned, teleported, or knocked away, the steal can fail.</li>
+        </ol>
+
+        <h3>Stealing Risk</h3>
+        <p>Stealing should be risky because defenders can use: base locks, guards, guard bows, teleport guards, maces, knockback items, base teleport items, lock upgrades.</p>
+
+        <div class="callout"><span class="cico">⚠️</span><p>A stolen EmoteBro is <strong>not fully stolen</strong> until it reaches the thief's base. Until then, it can be recovered.</p></div>
+      </div>
+    </article>
+
+    <!-- ============================== 9. LOCK UPGRADES ============================== -->
+    <article class="section" data-num="9" data-icon="🔐" data-title="Base Lock Upgrades">
+      <header class="section-header"><div class="section-icon">🔐</div><h2>Base Lock Upgrades</h2><span class="impl-badge">Built</span><span class="num-badge">09</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <h3>Normal Lock</h3>
+        <p>Blocks other players from entering for 2 minutes.</p>
+        <h3>Teleport Lock Upgrade</h3>
+        <p>An upgraded lock looks the same as a normal lock, but has a hidden effect — if another player touches it, they're teleported back to their own base. Looks normal, so it's hard to tell if it's upgraded. A sneaky trap.</p>
+
+        <h3>Possible Lock Upgrade Levels</h3>
+        <div class="tbl-wrap">
+          <table class="sortable-table">
+            <thead><tr><th class="sortable num" data-type="num">Level</th><th class="sortable">Effect</th><th class="sortable">Cost</th></tr></thead>
+            <tbody>
+              <tr><td class="num" data-value="1">1</td><td>Locks base for 2 minutes</td><td>Free / default</td></tr>
+              <tr><td class="num" data-value="2">2</td><td>Slightly shorter cooldown</td><td>Coins</td></tr>
+              <tr><td class="num" data-value="3">3</td><td>Teleports intruders to their base</td><td>Coins + special currency</td></tr>
+              <tr><td class="num" data-value="4">4</td><td>Longer lock duration</td><td>Special currency</td></tr>
+              <tr><td class="num" data-value="5">5</td><td>Hidden trap lock</td><td>VIP / special currency</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>For v1: normal lock + teleport lock.</p>
+      </div>
+    </article>
+
+    <!-- ============================== 10. GUARDS ============================== -->
+    <article class="section" data-num="10" data-icon="🛡️" data-title="Guard System">
+      <header class="section-header"><div class="section-icon">🛡️</div><h2>Guard System</h2><span class="impl-badge">Built</span><span class="num-badge">10</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>Players can buy a <strong>guard suit</strong> from the shop and put it on an EmoteBro — that EmoteBro becomes a guard.</p>
+
+        <h3>Guard Rules</h3>
+        <ul>
+          <li>Protects the base</li>
+          <li>Has a fixed vision range</li>
+          <li>Detects intruders inside that range</li>
+          <li>Attacks or uses an item if an intruder gets close</li>
+          <li>Does not protect the entire base by itself</li>
+        </ul>
+
+        <h3>Guard Range</h3>
+        <p>Use a circle around the guard. Example range: <strong>15 studs / tiles / units</strong>. If an enemy enters the range, the guard reacts.</p>
+
+        <h3>Guard Types</h3>
+        <div class="card-grid">
+          <div class="card"><span class="ico">👮</span><span class="ttl">Basic Guard</span><span class="sub">Runs at enemies, knocks back, brief stun.</span></div>
+          <div class="card"><span class="ico">🌀</span><span class="ttl">Teleport Guard</span><span class="sub">Teleports enemy randomly or to their own base.</span></div>
+          <div class="card"><span class="ico">🏹</span><span class="ttl">Bow Guard</span><span class="sub">Ranged attack, 2-sec stun.</span></div>
+        </div>
+
+        <h3>Guard Items</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Item</th><th>Effect</th></tr></thead>
+            <tbody>
+              <tr><td>Mace</td><td>Knocks enemy away and stuns 4–5 seconds</td></tr>
+              <tr><td>Teleport Wand</td><td>Teleports enemy to random location</td></tr>
+              <tr><td>Base Teleporter</td><td>Teleports enemy to their own base</td></tr>
+              <tr><td>Bow</td><td>Stuns enemy from range for 2 seconds</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Guard Balance</h3>
+        <p>Guards should not be unbeatable. Limitations: fixed vision range, attack cooldown, only protects part of the base, can be distracted/avoided, strong guards cost more.</p>
+      </div>
+    </article>
+
+    <!-- ============================== 11. PLAYER DEFENSE ============================== -->
+    <article class="section" data-num="11" data-icon="⚔️" data-title="Player Defense Items">
+      <header class="section-header"><div class="section-icon">⚔️</div><h2>Player Defense Items</h2><span class="impl-badge">Built</span><span class="num-badge">11</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <h3>Mace</h3>
+        <p>Used when someone is outside the base waiting for the lock to expire.</p>
+        <ul>
+          <li>Knock target far away</li>
+          <li>Stun target for 4–5 seconds</li>
+          <li>Cooldown after use</li>
+        </ul>
+        <p>Suggested values: medium knockback, 4-sec stun, 15-sec cooldown.</p>
+
+        <h3>Teleport-to-Base Item</h3>
+        <p>Lets the player teleport back to their base. Useful when their base is unlocked, they see the private message, and they need to stop a thief.</p>
+        <ul>
+          <li>Player activates item.</li>
+          <li>Player teleports to their base.</li>
+          <li>Item has cooldown or limited uses.</li>
+        </ul>
+        <p>v1: 60-sec cooldown, cannot use while stunned.</p>
+      </div>
+    </article>
+
+    <!-- ============================== 12. PETS ============================== -->
+    <article class="section" data-num="12" data-icon="🐾" data-title="Pets">
+      <header class="section-header"><div class="section-icon">🐾</div><h2>Pets</h2><span class="impl-badge">Built</span><span class="num-badge">12</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>Pets help players earn more money. Buy from the pet store with coins or special currency.</p>
+
+        <h3>Pet Effects</h3>
+        <div class="tbl-wrap">
+          <table class="sortable-table">
+            <thead><tr><th class="sortable">Pet</th><th class="sortable num" data-type="num">Cost</th><th class="sortable num" data-type="num">Bonus</th></tr></thead>
+            <tbody>
+              <tr><td>Tiny Pet</td><td class="num" data-value="100">100 coins</td><td class="num" data-value="5">+5% money</td></tr>
+              <tr><td>Happy Pet</td><td class="num" data-value="500">500 coins</td><td class="num" data-value="10">+10% money</td></tr>
+              <tr><td>Golden Pet</td><td class="num" data-value="2500">2,500 coins</td><td class="num" data-value="25">+25% money</td></tr>
+              <tr><td>Mega Pet</td><td class="num" data-value="99999">Special currency</td><td class="num" data-value="50">+50% money</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Pet Stacking</h3>
+        <p>v1: one pet equipped at a time, better pets give better bonuses. Later: multiple pets, levels, rarities.</p>
+      </div>
+    </article>
+
+    <!-- ============================== 13. MOUNTS ============================== -->
+    <article class="section" data-num="13" data-icon="🐉" data-title="Mounts">
+      <header class="section-header"><div class="section-icon">🐉</div><h2>Mounts</h2><span class="impl-badge">Built</span><span class="num-badge">13</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>Mounts make players move faster. Bought with special game-only currency.</p>
+
+        <h3>Example Mounts</h3>
+        <div class="tbl-wrap">
+          <table class="sortable-table">
+            <thead><tr><th class="sortable">Mount</th><th class="sortable num" data-type="num">Cost</th><th class="sortable num" data-type="num">Speed Bonus</th></tr></thead>
+            <tbody>
+              <tr><td>Scooter</td><td class="num" data-value="50">50 EB</td><td class="num" data-value="10">+10%</td></tr>
+              <tr><td>Hoverboard</td><td class="num" data-value="150">150 EB</td><td class="num" data-value="20">+20%</td></tr>
+              <tr><td>Wolf</td><td class="num" data-value="400">400 EB</td><td class="num" data-value="35">+35%</td></tr>
+              <tr><td>Dragon</td><td class="num" data-value="1000">1,000 EB</td><td class="num" data-value="50">+50%</td></tr>
+              <tr><td>VIP Dragon</td><td class="num" data-value="9999">VIP only</td><td class="num" data-value="60">+60%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Better mounts cost more, are faster, and help players get around faster, return to base faster, reach EmoteBros faster, and escape/chase thieves.</p>
+      </div>
+    </article>
+
+    <!-- ============================== 14. CURRENCY ============================== -->
+    <article class="section" data-num="14" data-icon="💰" data-title="Currency System">
+      <header class="section-header"><div class="section-icon">💰</div><h2>Currency System</h2><span class="impl-badge">Built</span><span class="num-badge">14</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <div class="two-col">
+          <div>
+            <h3>💰 Coins</h3>
+            <p>The main free currency.</p>
+            <h4>Earned from</h4>
+            <ul>
+              <li>EmoteBros</li><li>Money slab</li><li>Lucky blocks</li><li>Daily spin</li><li>Events</li><li>Selling EmoteBros</li>
+            </ul>
+            <h4>Used for</h4>
+            <ul>
+              <li>Buying EmoteBros</li><li>Pets</li><li>Guards</li><li>Lock upgrades</li><li>Basic lucky blocks</li><li>Evolutions</li>
+            </ul>
+          </div>
+          <div>
+            <h3>💎 Emo Bucks</h3>
+            <p>Special game currency.</p>
+            <h4>Used for</h4>
+            <ul>
+              <li>VIP</li><li>Mounts</li><li>Spins</li><li>Faster events</li><li>Special lucky blocks</li><li>Premium items</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout"><span class="cico">👨‍👩‍👧</span><p>For a kid-focused game, build the prototype with <strong>no real-money purchases</strong>. Make Emo Bucks earnable in-game or grantable via dev commands. If this ever went public, real-money purchases would need parent-friendly design and platform compliance.</p></div>
+      </div>
+    </article>
+
+    <!-- ============================== 15. VIP ============================== -->
+    <article class="section" data-num="15" data-icon="👑" data-title="VIP System">
+      <header class="section-header"><div class="section-icon">👑</div><h2>VIP System</h2><span class="impl-badge partial">Partial</span><span class="num-badge">15</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>Players can buy VIP using special currency.</p>
+        <h3>VIP Benefits</h3>
+        <ul>
+          <li>Access to VIP area</li>
+          <li>Special VIP carpet</li>
+          <li>Better EmoteBros</li>
+          <li>Better lucky blocks</li>
+          <li>Better rewards</li>
+          <li>Double-quality stuff</li>
+        </ul>
+        <h3>VIP Area Rule</h3>
+        <p>Only VIP players can enter. Non-VIP attempts: show "VIP only!" and block entrance or teleport them back.</p>
+        <h3>VIP Reward Rule</h3>
+        <p>Everything VIP should be roughly <strong>2× as good</strong>: EmoteBros earn 2×, lucky blocks have 2× better odds, items are stronger/cheaper, events may have better rewards.</p>
+      </div>
+    </article>
+
+    <!-- ============================== 16. DAILY SPIN ============================== -->
+    <article class="section" data-num="16" data-icon="🎡" data-title="Daily Spin Wheel">
+      <header class="section-header"><div class="section-icon">🎡</div><h2>Daily Spin Wheel</h2><span class="impl-badge">Built</span><span class="num-badge">16</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>The daily spin wheel gives one reward per day.</p>
+        <h3>Possible Rewards</h3>
+        <div class="card-grid">
+          <div class="card"><span class="ico">💰</span><span class="ttl">Coins</span></div>
+          <div class="card"><span class="ico">💎</span><span class="ttl">Emo Bucks</span></div>
+          <div class="card"><span class="ico">🎁</span><span class="ttl">Lucky Block</span></div>
+          <div class="card"><span class="ico">🐾</span><span class="ttl">Pet</span></div>
+          <div class="card"><span class="ico">⚡</span><span class="ttl">Temp Boost</span></div>
+          <div class="card"><span class="ico">🐉</span><span class="ttl">Mount Trial</span></div>
+          <div class="card"><span class="ico">🛡️</span><span class="ttl">Guard Item</span></div>
+          <div class="card"><span class="ico">⏩</span><span class="ttl">Event Token</span></div>
+        </div>
+
+        <h3>Wheel Changes Daily</h3>
+        <p>Reward options are different each day — the wheel feels fresh and players want to check back.</p>
+
+        <h3>Login Streak Bonus</h3>
+        <div class="tbl-wrap">
+          <table class="sortable-table">
+            <thead><tr><th class="sortable num" data-type="num">Streak</th><th class="sortable">Wheel Quality</th></tr></thead>
+            <tbody>
+              <tr><td class="num" data-value="1">1 day</td><td>Normal</td></tr>
+              <tr><td class="num" data-value="2">2 days</td><td>Slightly better</td></tr>
+              <tr><td class="num" data-value="3">3 days</td><td>Better</td></tr>
+              <tr><td class="num" data-value="5">5 days</td><td>Great</td></tr>
+              <tr><td class="num" data-value="7">7 days</td><td>Super wheel</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>v1: streak resets to 1 if a day is missed.</p>
+      </div>
+    </article>
+
+    <!-- ============================== 17. EVENTS ============================== -->
+    <article class="section" data-num="17" data-icon="⚡" data-title="Events">
+      <header class="section-header"><div class="section-icon">⚡</div><h2>Events</h2><span class="impl-badge">Built</span><span class="num-badge">17</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>Events happen every hour by default.</p>
+        <h3>Event Timer</h3>
+        <blockquote>"Next Event: 42:15"</blockquote>
+        <p>When the timer reaches 0, an event starts.</p>
+
+        <h3>Event Types</h3>
+        <div class="card-grid">
+          <div class="card"><span class="ico">🥚</span><span class="ttl">Secret Egg</span><span class="sub">Hatch for a rare chance</span></div>
+          <div class="card"><span class="ico">💪</span><span class="ttl">Mega EmoteBro</span><span class="sub">Players race for it</span></div>
+          <div class="card"><span class="ico">⚗️</span><span class="ttl">Ready-to-Evolve</span><span class="sub">Pre-evolved special</span></div>
+          <div class="card"><span class="ico">🌧️</span><span class="ttl">Lucky Block Storm</span><span class="sub">Extra blocks appear</span></div>
+          <div class="card"><span class="ico">👑</span><span class="ttl">VIP Event</span><span class="sub">Bonus VIP rewards</span></div>
+        </div>
+
+        <h3>Speeding Up Events</h3>
+        <p>Players can spend special currency to make the <strong>next event</strong> happen sooner. Important: spending currency only speeds up the next event — it does <em>not</em> permanently speed up all future events.</p>
+
+        <div class="callout"><span class="cico">🎭</span><p><strong>Hidden Good EmoteBro Twist:</strong> when a player speeds up an event, they may get a special EmoteBro that looks bad to everyone else. To others, it looks bad / weak / not worth stealing. Once it reaches the owner's base, it reveals its true form — and it's actually very, very good. A secret treasure mechanic.</p></div>
+      </div>
+    </article>
+
+    <!-- ============================== 18. LEVER ============================== -->
+    <article class="section" data-num="18" data-icon="🎚️" data-title="Lever System">
+      <header class="section-header"><div class="section-icon">🎚️</div><h2>Lever System</h2><span class="impl-badge">Built</span><span class="num-badge">18</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>A lever changes which way EmoteBros move on the carpet.</p>
+        <h3>Behavior</h3>
+        <ul>
+          <li>Direction of EmoteBro movement changes</li>
+          <li>EmoteBros may start moving along a different path</li>
+          <li>Can affect which players reach them first</li>
+          <li>Changes strategy</li>
+        </ul>
+        <h3>Cooldown</h3>
+        <p>Lever should have a cooldown — example 30 seconds. Only one lever pull every 30 seconds globally.</p>
+        <blockquote>"The EmoteBro path has changed!"</blockquote>
+      </div>
+    </article>
+
+    <!-- ============================== 19. SHOPS ============================== -->
+    <article class="section" data-num="19" data-icon="🛒" data-title="Shops">
+      <header class="section-header"><div class="section-icon">🛒</div><h2>Shops</h2><span class="impl-badge">Built</span><span class="num-badge">19</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <div class="card-grid">
+          <div class="card"><span class="ico">🏪</span><span class="ttl">Main Shop</span><span class="sub">Guard suits, maces, teleport items, lock upgrades, evolutions, basic boosts</span></div>
+          <div class="card"><span class="ico">🐾</span><span class="ttl">Pet Shop</span><span class="sub">Pets, better pets, pet upgrades later</span></div>
+          <div class="card"><span class="ico">🎁</span><span class="ttl">Lucky Block Shop</span><span class="sub">Normal, mega, event, VIP lucky blocks</span></div>
+          <div class="card"><span class="ico">🐉</span><span class="ttl">Mount Shop</span><span class="sub">Mounts using special currency</span></div>
+          <div class="card"><span class="ico">👑</span><span class="ttl">VIP Shop</span><span class="sub">VIP-only: better items, lucky blocks, mounts, guards</span></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ============================== 20. GAME STATES ============================== -->
+    <article class="section" data-num="20" data-icon="💾" data-title="Game States">
+      <header class="section-header"><div class="section-icon">💾</div><h2>Game States</h2><span class="impl-badge">Built</span><span class="num-badge">20</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <h3>Player State</h3>
+        <div class="codeblock">
+          <button class="copybtn">Copy</button>
+<pre>{
+  "playerId": "string",
+  "coins": 0,
+  "emoBucks": 0,
+  "isVip": false,
+  "ownedEmoteBros": [],
+  "baseSlots": [],
+  "pets": [],
+  "equippedPetId": null,
+  "mounts": [],
+  "equippedMountId": null,
+  "lockLevel": 1,
+  "guardItems": [],
+  "dailySpinLastClaimed": null,
+  "dailyStreak": 0
+}</pre>
+        </div>
+
+        <h3>EmoteBro Data</h3>
+        <div class="codeblock">
+          <button class="copybtn">Copy</button>
+<pre>{
+  "id": "basic_bro",
+  "name": "Basic Bro",
+  "rarity": "Common",
+  "costCoins": 25,
+  "moneyPerSecond": 1,
+  "evolutionGroup": "basic_bro",
+  "evolutionLevel": 1,
+  "appearance": "basic_bro_model",
+  "canBeGuard": true
+}</pre>
+        </div>
+
+        <h3>Base Slot Data</h3>
+        <div class="codeblock">
+          <button class="copybtn">Copy</button>
+<pre>{
+  "slotIndex": 0,
+  "emoteBroInstanceId": "abc123",
+  "isGuard": false,
+  "guardItem": null
+}</pre>
+        </div>
+
+        <h3>Guard Data</h3>
+        <div class="codeblock">
+          <button class="copybtn">Copy</button>
+<pre>{
+  "type": "bow_guard",
+  "range": 15,
+  "attackCooldownSeconds": 5,
+  "stunSeconds": 2,
+  "effect": "stun"
+}</pre>
+        </div>
+
+        <h3>Event Data</h3>
+        <div class="codeblock">
+          <button class="copybtn">Copy</button>
+<pre>{
+  "nextEventAt": "timestamp",
+  "currentEvent": null,
+  "eventWasSpedUpByPlayerId": null
+}</pre>
+        </div>
+      </div>
+    </article>
+
+    <!-- ============================== 21. MVP ============================== -->
+    <article class="section open" data-num="21" data-icon="🚀" data-title="MVP Version">
+      <header class="section-header"><div class="section-icon">🚀</div><h2>MVP Version</h2><span class="impl-badge">Built</span><span class="num-badge">21</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>The first version to build. Tick items off as you build them — progress is saved locally.</p>
+        <div class="callout"><span class="cico">🎮</span><p><strong>Prototype shipped:</strong> all 20 MVP features are implemented in <a href="game.html"><strong>game.html</strong></a>. Timings are compressed for testing — base lock 30s (spec: 2 min), events every 60s (spec: 1 hr), daily spin 2-min cooldown (spec: 24 hr). Tune in <code>js/config.js</code> → <code>TUNE</code>.</p></div>
+
+        <div class="mvp-progress">
+          <span class="count" id="mvpCount">0 / 20</span>
+          <div class="mvp-bar"><div class="mvp-bar-fill" id="mvpBarFill"></div></div>
+          <button class="iconbtn" id="mvpReset" title="Reset checklist">↺ Reset</button>
+        </div>
+
+        <h3>MVP Features</h3>
+        <div class="checklist" id="mvpChecklist">
+          <!-- populated by JS -->
+        </div>
+
+        <h3>MVP Can Skip</h3>
+        <p>These can wait until v2:</p>
+        <ul>
+          <li>Real-money purchases</li>
+          <li>Complex VIP economy</li>
+          <li>Lots of mounts</li>
+          <li>Advanced animations</li>
+          <li>Huge number of EmoteBros</li>
+          <li>Complex event varieties</li>
+          <li>Trading</li>
+          <li>Player inventory UI polish</li>
+          <li>Advanced guard AI</li>
+          <li>Mobile optimization, unless targeting mobile immediately</li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- ============================== 22. V2 ============================== -->
+    <article class="section" data-num="22" data-icon="🌟" data-title="Version 2 Features">
+      <header class="section-header"><div class="section-icon">🌟</div><h2>Version 2 Features</h2><span class="impl-badge partial">Partial</span><span class="num-badge">22</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>After the MVP works, add:</p>
+        <ul>
+          <li>VIP area</li>
+          <li>Mount shop</li>
+          <li>Event speed-up currency</li>
+          <li>Hidden bad-looking-but-good EmoteBro</li>
+          <li>Daily spin wheel that changes daily</li>
+          <li>Login streak better rewards</li>
+          <li>More lucky block types</li>
+          <li>More EmoteBro evolutions</li>
+          <li>Better guard types</li>
+          <li>Lock teleport upgrade</li>
+          <li>VIP lucky blocks</li>
+          <li>More map polish</li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- ============================== 23. BALANCE ============================== -->
+    <article class="section" data-num="23" data-icon="⚖️" data-title="Balance Rules">
+      <header class="section-header"><div class="section-icon">⚖️</div><h2>Important Balance Rules</h2><span class="num-badge">23</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>The game should feel fun, not unfair.</p>
+        <h3>Stealing Balance</h3>
+        <div class="two-col">
+          <div>
+            <h4>🛡️ Defender advantages</h4>
+            <ul>
+              <li>Lock</li><li>Private unlock message</li><li>Teleport-to-base item</li><li>Guards</li><li>Mace</li><li>Teleport lock upgrade</li>
+            </ul>
+          </div>
+          <div>
+            <h4>🦹 Thief advantages</h4>
+            <ul>
+              <li>Can wait for lock to expire</li><li>Can sneak around guard range</li><li>Can use speed mount</li><li>Can steal valuable EmoteBros</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Money Balance — Early Game Pacing</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Milestone</th><th>Target Time</th></tr></thead>
+            <tbody>
+              <tr><td>First EmoteBro</td><td>Within 10 seconds</td></tr>
+              <tr><td>First pet</td><td>2–3 minutes</td></tr>
+              <tr><td>First lucky block</td><td>5 minutes</td></tr>
+              <tr><td>First guard</td><td>10 minutes</td></tr>
+              <tr><td>First evolution</td><td>15–20 minutes</td></tr>
+              <tr><td>VIP / mount goals</td><td>Later</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Base Capacity Balance</h3>
+        <p>12 slots is good because players have to make choices. They should ask: Do I keep this EmoteBro? Evolve? Replace? Make it a guard? Risk stealing a better one?</p>
+      </div>
+    </article>
+
+    <!-- ============================== 24. UI ============================== -->
+    <article class="section" data-num="24" data-icon="📱" data-title="UI Requirements">
+      <header class="section-header"><div class="section-icon">📱</div><h2>UI Requirements</h2><span class="impl-badge">Built</span><span class="num-badge">24</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <h3>Main HUD</h3>
+        <ul>
+          <li>Coins</li><li>Emo Bucks</li><li>Current pet bonus</li><li>Equipped mount</li><li>Base lock timer</li><li>Event timer</li><li>Daily spin available indicator</li>
+        </ul>
+
+        <h3>Base UI</h3>
+        <ul>
+          <li>Base owner</li><li>Lock status</li><li>Money waiting on slab</li><li>EmoteBro slots</li><li>Guard status</li>
+        </ul>
+
+        <h3>Shop UI</h3>
+        <p>Each shop item should show: name, cost, what it does, buy button.</p>
+
+        <h3>Messages</h3>
+        <div class="card-grid">
+          <div class="card"><span class="ico">❌</span><span class="ttl">Not enough coins!</span></div>
+          <div class="card"><span class="ico">🚫</span><span class="ttl">Your base is full!</span></div>
+          <div class="card"><span class="ico">🔓</span><span class="ttl">Your base is unlocked!</span></div>
+          <div class="card"><span class="ico">🛒</span><span class="ttl">You bought Basic Bro!</span></div>
+          <div class="card"><span class="ico">🚨</span><span class="ttl">Someone is stealing your EmoteBro!</span></div>
+          <div class="card"><span class="ico">💰</span><span class="ttl">You collected 500 coins!</span></div>
+          <div class="card"><span class="ico">⭐</span><span class="ttl">You got a Rare EmoteBro!</span></div>
+          <div class="card"><span class="ico">⏰</span><span class="ttl">Next event starts soon!</span></div>
+          <div class="card"><span class="ico">👑</span><span class="ttl">VIP only!</span></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ============================== 25. TECH ============================== -->
+    <article class="section" data-num="25" data-icon="🧱" data-title="Prototype Tech Shape">
+      <header class="section-header"><div class="section-icon">🧱</div><h2>Suggested Prototype Tech Shape</h2><span class="impl-badge">Built</span><span class="num-badge">25</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>Structure the project around clean systems rather than hard-coding everything.</p>
+
+        <h3>Main Systems</h3>
+        <div class="card-grid">
+          <div class="card"><span class="ico">👤</span><span class="ttl">PlayerSystem</span></div>
+          <div class="card"><span class="ico">🏠</span><span class="ttl">BaseSystem</span></div>
+          <div class="card"><span class="ico">💰</span><span class="ttl">CurrencySystem</span></div>
+          <div class="card"><span class="ico">✨</span><span class="ttl">EmoteBroSpawnSystem</span></div>
+          <div class="card"><span class="ico">➡️</span><span class="ttl">EmoteBroMovementSystem</span></div>
+          <div class="card"><span class="ico">📈</span><span class="ttl">IncomeSystem</span></div>
+          <div class="card"><span class="ico">🦹</span><span class="ttl">StealingSystem</span></div>
+          <div class="card"><span class="ico">🔒</span><span class="ttl">LockSystem</span></div>
+          <div class="card"><span class="ico">🛡️</span><span class="ttl">GuardSystem</span></div>
+          <div class="card"><span class="ico">🛒</span><span class="ttl">ShopSystem</span></div>
+          <div class="card"><span class="ico">🐾</span><span class="ttl">PetSystem</span></div>
+          <div class="card"><span class="ico">🎁</span><span class="ttl">LuckyBlockSystem</span></div>
+          <div class="card"><span class="ico">🎡</span><span class="ttl">DailySpinSystem</span></div>
+          <div class="card"><span class="ico">⚡</span><span class="ttl">EventSystem</span></div>
+          <div class="card"><span class="ico">💾</span><span class="ttl">SaveSystem</span></div>
+        </div>
+
+        <h3>Data-Driven Config</h3>
+        <p>Put EmoteBros, pets, mounts, lucky blocks, and shop items in config files.</p>
+        <div class="codeblock">
+          <button class="copybtn">Copy</button>
+<pre>{
+  "emoteBros": [
+    {
+      "id": "basic_bro",
+      "name": "Basic Bro",
+      "rarity": "Common",
+      "costCoins": 25,
+      "moneyPerSecond": 1
+    },
+    {
+      "id": "mega_bro",
+      "name": "Mega Bro",
+      "rarity": "Rare",
+      "costCoins": 1000,
+      "moneyPerSecond": 40
+    }
+  ]
+}</pre>
+        </div>
+        <p>This makes it easy to invent new EmoteBros later without changing game logic.</p>
+      </div>
+    </article>
+
+    <!-- ============================== 26. OPEN QUESTIONS ============================== -->
+    <article class="section" data-num="26" data-icon="❓" data-title="Open Questions">
+      <header class="section-header"><div class="section-icon">❓</div><h2>Open Questions for the Kids Later</h2><span class="num-badge">26</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <p>These don't block v1, but they'd make the game better:</p>
+        <ol>
+          <li>What do EmoteBros look like?</li>
+          <li>Are they emojis, people, monsters, animals, or silly faces?</li>
+          <li>What are the 12 best EmoteBros?</li>
+          <li>What should the rarest EmoteBro be called?</li>
+          <li>Can players sell EmoteBros?</li>
+          <li>Can players trade with each other?</li>
+          <li>What happens if a thief gets caught while carrying an EmoteBro?</li>
+          <li>Can guards be upgraded?</li>
+          <li>Can pets evolve too?</li>
+          <li>What should VIP look like?</li>
+          <li>What should the best mount be?</li>
+          <li>Should the map have secrets?</li>
+        </ol>
+      </div>
+    </article>
+
+    <!-- ============================== 27. PITCH ============================== -->
+    <article class="section open" data-num="27" data-icon="🎤" data-title="One-Sentence Pitch">
+      <header class="section-header"><div class="section-icon">🎤</div><h2>One-Sentence Pitch</h2><span class="num-badge">27</span><span class="chev">›</span></header>
+      <div class="section-body">
+        <div class="callout"><span class="cico">✨</span><p><strong>EmoteBros is a multiplayer collector-tycoon game where players buy funny EmoteBros, earn money from their base, hatch lucky blocks, evolve characters, steal from other bases, and defend their own base with locks, guards, pets, mounts, and surprise events.</strong></p></div>
+      </div>
+    </article>
+
+    <footer>
+      <p class="pitch">"Get rich, collect EmoteBros, raid your friends, defend your base."</p>
+      <p>EmoteBros · Game Design Spec · v1</p>
+    </footer>
+  </main>
+</div>
+
+<button class="totop" id="totop" title="Scroll to top">↑</button>
+
+<script>
+/* =================== TOC GENERATION =================== */
+(function buildToc() {
+  const toc = document.getElementById('toc');
+  document.querySelectorAll('article.section').forEach(s => {
+    const num = s.dataset.num;
+    const icon = s.dataset.icon;
+    const title = s.dataset.title;
+    const id = 'sec-' + num;
+    s.id = id;
+    const li = document.createElement('li');
+    li.innerHTML = `<a href="#${id}" data-section="${num}"><span class="num">${num}</span><span>${icon}</span><span>${title}</span></a>`;
+    toc.appendChild(li);
+  });
+})();
+
+/* =================== COLLAPSE / EXPAND =================== */
+document.querySelectorAll('.section-header').forEach(h => {
+  h.addEventListener('click', () => h.parentElement.classList.toggle('open'));
+});
+
+const expandBtn = document.getElementById('expandAll');
+let allExpanded = false;
+expandBtn.addEventListener('click', () => {
+  allExpanded = !allExpanded;
+  document.querySelectorAll('article.section').forEach(s => s.classList.toggle('open', allExpanded));
+  expandBtn.textContent = allExpanded ? '▴ Collapse' : '▾ Expand all';
+});
+
+/* =================== THEME TOGGLE =================== */
+const themeBtn = document.getElementById('themeToggle');
+const savedTheme = localStorage.getItem('emoteBros-theme');
+if (savedTheme) {
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  themeBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+}
+themeBtn.addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  themeBtn.textContent = next === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('emoteBros-theme', next);
+});
+
+/* =================== SEARCH =================== */
+const search = document.getElementById('search');
+search.addEventListener('input', e => {
+  const q = e.target.value.toLowerCase().trim();
+  document.querySelectorAll('article.section').forEach(s => {
+    if (!q) { s.classList.remove('hidden'); return; }
+    const hit = s.textContent.toLowerCase().includes(q);
+    s.classList.toggle('hidden', !hit);
+    if (hit) s.classList.add('open');
+  });
+});
+
+/* =================== COPY CODE =================== */
+document.querySelectorAll('.copybtn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const pre = btn.parentElement.querySelector('pre');
+    try {
+      await navigator.clipboard.writeText(pre.textContent);
+      btn.textContent = '✓ Copied';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+    } catch (err) { btn.textContent = 'Failed'; }
+  });
+});
+
+/* =================== SORTABLE TABLES =================== */
+document.querySelectorAll('table.sortable-table').forEach(table => {
+  const headers = table.querySelectorAll('th.sortable');
+  headers.forEach((th, idx) => {
+    th.addEventListener('click', () => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const isNum = th.dataset.type === 'num' || th.classList.contains('num');
+      const currentDir = th.classList.contains('asc') ? 'desc' : 'asc';
+      headers.forEach(h => h.classList.remove('asc', 'desc'));
+      th.classList.add(currentDir);
+      rows.sort((a, b) => {
+        const cellA = a.children[idx];
+        const cellB = b.children[idx];
+        let va = cellA.dataset.value ?? cellA.textContent.trim();
+        let vb = cellB.dataset.value ?? cellB.textContent.trim();
+        if (isNum) { va = parseFloat(va) || 0; vb = parseFloat(vb) || 0; }
+        else { va = va.toString().toLowerCase(); vb = vb.toString().toLowerCase(); }
+        if (va < vb) return currentDir === 'asc' ? -1 : 1;
+        if (va > vb) return currentDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+});
+
+/* =================== MVP CHECKLIST =================== */
+const mvpItems = [
+  '4-player lobby',
+  '4 bases',
+  'EmoteBro carpet path',
+  'EmoteBros spawn and move',
+  'Players can buy EmoteBros',
+  'EmoteBros go to player base',
+  '12 base slots',
+  'EmoteBros generate money',
+  'Money slab collects money',
+  'Base lock slab locks base for 2 minutes',
+  'Other players can steal EmoteBros when base is unlocked',
+  'Mace item knocks / stuns players',
+  'Pet shop with simple money multiplier',
+  'Lucky blocks that hatch EmoteBros',
+  'Basic daily spin',
+  'Simple hourly event',
+  'Basic guard suit',
+  'Bow guard stun',
+  'Teleport guard',
+  'Save / load player data'
+];
+// Default to all-checked since prototype ships with all MVP features. User can untick to track regression.
+const _mvpSaved = localStorage.getItem('emoteBros-mvp-v2');
+const mvpStore = _mvpSaved ? JSON.parse(_mvpSaved) : Object.fromEntries(Array.from({length: 20}, (_, i) => [i, true]));
+const checklistEl = document.getElementById('mvpChecklist');
+const countEl = document.getElementById('mvpCount');
+const barEl = document.getElementById('mvpBarFill');
+
+function renderMvp() {
+  checklistEl.innerHTML = '';
+  mvpItems.forEach((item, i) => {
+    const checked = !!mvpStore[i];
+    const label = document.createElement('label');
+    label.innerHTML = `<input type="checkbox" data-idx="${i}" ${checked ? 'checked' : ''}><span class="check-label">${i + 1}. ${item}</span>`;
+    checklistEl.appendChild(label);
+  });
+  updateMvpProgress();
+}
+function updateMvpProgress() {
+  const done = mvpItems.filter((_, i) => mvpStore[i]).length;
+  countEl.textContent = `${done} / ${mvpItems.length}`;
+  barEl.style.width = `${(done / mvpItems.length) * 100}%`;
+}
+checklistEl.addEventListener('change', e => {
+  if (e.target.matches('input[type="checkbox"]')) {
+    const i = e.target.dataset.idx;
+    mvpStore[i] = e.target.checked;
+    localStorage.setItem('emoteBros-mvp-v2', JSON.stringify(mvpStore));
+    updateMvpProgress();
+  }
+});
+document.getElementById('mvpReset').addEventListener('click', () => {
+  if (confirm('Reset MVP checklist?')) {
+    for (const k of Object.keys(mvpStore)) delete mvpStore[k];
+    localStorage.setItem('emoteBros-mvp-v2', '{}');
+    renderMvp();
+  }
+});
+renderMvp();
+
+/* =================== SCROLL TO TOP + ACTIVE TOC =================== */
+const totop = document.getElementById('totop');
+const tocLinks = document.querySelectorAll('#toc a');
+const sections = document.querySelectorAll('article.section');
+
+function onScroll() {
+  totop.classList.toggle('show', window.scrollY > 400);
+  let active = null;
+  const offset = 120;
+  for (const s of sections) {
+    const rect = s.getBoundingClientRect();
+    if (rect.top < offset) active = s.id;
+  }
+  tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + active));
+}
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+totop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+</script>
+</body>
+</html>

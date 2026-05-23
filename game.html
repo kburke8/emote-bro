@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EmoteBros — Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="game.css" />
+</head>
+<body>
+
+<!-- ============== WORLD CANVAS ============== -->
+<div id="stage">
+  <canvas id="canvas" width="1600" height="900"></canvas>
+
+  <!-- ============== HUD OVERLAY ============== -->
+  <div id="hud">
+    <div class="hud-row hud-top">
+      <div class="hud-pill" id="coinPill"><span class="ico">💰</span><span id="coinAmt">0</span></div>
+      <div class="hud-pill" id="ebPill"><span class="ico">💎</span><span id="ebAmt">0</span></div>
+      <div class="hud-pill" id="petPill"><span class="ico">🐾</span><span id="petInfo">No pet</span></div>
+      <div class="hud-pill" id="mountPill"><span class="ico">🐉</span><span id="mountInfo">On foot</span></div>
+      <div class="hud-pill" id="vipPill" style="display:none"><span class="ico">👑</span>VIP</div>
+    </div>
+    <div class="hud-row hud-right">
+      <div class="hud-card" id="eventCard">
+        <div class="hud-card-title">Next Event</div>
+        <div class="hud-card-body" id="eventTimer">--:--</div>
+        <div class="hud-card-sub" id="eventName"></div>
+      </div>
+      <div class="hud-card" id="lockCard" style="display:none">
+        <div class="hud-card-title">Base Locked</div>
+        <div class="hud-card-body" id="lockTimer">--:--</div>
+      </div>
+      <div class="hud-card" id="spinCard">
+        <div class="hud-card-title">Daily Spin</div>
+        <div class="hud-card-body" id="spinStatus">Ready! Press G</div>
+      </div>
+    </div>
+    <div class="hud-row hud-bottom-left">
+      <div class="hud-card" id="invCard">
+        <div class="hud-card-title">Inventory</div>
+        <div class="hud-card-body inv-grid">
+          <div class="inv-slot" id="invMace" data-key="Space"><span class="ico">🔨</span><span class="lbl">Mace</span><span class="kbd">Space</span></div>
+          <div class="inv-slot" id="invTp" data-key="T"><span class="ico">📍</span><span class="lbl">TP-Base</span><span class="kbd">T</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="hud-row hud-bottom-right">
+      <button class="hud-btn" id="helpBtn" title="Show controls">❓ Controls</button>
+      <button class="hud-btn" id="saveBtn" title="Save game">💾 Save</button>
+      <button class="hud-btn" id="resetBtn" title="Reset save">↺ Reset</button>
+    </div>
+    <div id="toasts"></div>
+    <div id="interactHint"></div>
+  </div>
+</div>
+
+<!-- ============== MODALS ============== -->
+<div class="modal-backdrop" id="modal" hidden>
+  <div class="modal-window">
+    <header class="modal-header">
+      <h2 id="modalTitle">Shop</h2>
+      <button class="modal-close" id="modalClose">✕</button>
+    </header>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ============== HELP SCREEN ============== -->
+<div class="modal-backdrop" id="helpModal" hidden>
+  <div class="modal-window">
+    <header class="modal-header">
+      <h2>🎮 How to Play</h2>
+      <button class="modal-close" id="helpClose">✕</button>
+    </header>
+    <div class="modal-body">
+      <h3>Controls</h3>
+      <ul class="ctrl-list">
+        <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows — move</li>
+        <li><kbd>E</kbd> — interact (buy EmoteBro, open shop, pull lever, steal, drop carried bro at base)</li>
+        <li><kbd>Space</kbd> — swing mace (stun nearby player)</li>
+        <li><kbd>T</kbd> — teleport to your base</li>
+        <li><kbd>G</kbd> — spin the daily wheel (when ready)</li>
+        <li><kbd>L</kbd> — toggle your base lock (while standing on lock slab)</li>
+        <li>Walk onto your <strong>money slab</strong> to collect coins.</li>
+        <li>Walk onto your <strong>lock slab</strong> and press <kbd>E</kbd> to lock your base.</li>
+      </ul>
+      <h3>How to win</h3>
+      <p>There is no winning. Get rich. Collect EmoteBros. Steal from the others. Don't get robbed.</p>
+      <h3>MVP notes (prototype timings)</h3>
+      <ul>
+        <li>Base lock: 30s (spec says 2 min — compressed for testing)</li>
+        <li>Events: every 60s (spec says 1 hour)</li>
+        <li>Daily spin: 2-min cooldown (spec says 24 hrs)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============== SCRIPTS ============== -->
+<script src="js/config.js"></script>
+<script src="js/state.js"></script>
+<script src="js/systems.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
