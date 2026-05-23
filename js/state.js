@@ -60,7 +60,7 @@ Game.STATE = (() => {
       time: 0,                            // seconds since game start
       carpetDirection: 1,                 // 1 = left→right, -1 = right→left
       leverCooldownUntil: 0,
-      lastSpawnAt: -999,
+      lastSpawnAt: 999,                   // large so first bro spawns immediately
       lastIncomeAt: 0,
       // event
       nextEventAt: CFG.TUNE.EVENT_INTERVAL_SECONDS,
@@ -159,6 +159,8 @@ Game.STATE = (() => {
       // ensure backfill for any fields added later
       if (!state.effects) state.effects = [];
       if (!state.noticeQueue) state.noticeQueue = [];
+      // heal old saves that had lastSpawnAt=-999 (carpet never spawned)
+      if (typeof state.lastSpawnAt !== 'number' || state.lastSpawnAt < 0) state.lastSpawnAt = 999;
       return true;
     } catch (e) {
       console.warn('Load failed', e);
