@@ -354,6 +354,35 @@ Game.UI = (() => {
       sec.appendChild(list);
       body.appendChild(sec);
     }
+
+    // Sell EmoteBros — partial coin refund + diamonds for rare+ rarities
+    const sellable = S.get().bros.filter(b => b.ownerId === p.id && b.state === 'in_slot' && !b.isGuard);
+    if (sellable.length) {
+      const sec2 = document.createElement('div');
+      sec2.innerHTML = '<h3>Sell EmoteBros</h3><p>Refund 10% of cost. Rare+ bros also pay 💎.</p>';
+      const list2 = document.createElement('div'); list2.className = 'shop-grid';
+      for (const b of sellable) {
+        const def = SYS.broDef(b.defId);
+        const coinRefund = Math.max(10, Math.floor((def.cost || 100) * 0.1));
+        const ebRefund = ({ Rare: 1, Epic: 3, Secret: 10 })[def.rarity] || 0;
+        const item = document.createElement('div');
+        item.className = 'shop-item';
+        item.innerHTML = `
+          <div class="ico">${def.emoji}</div>
+          <div class="name">${def.name}</div>
+          <div class="desc">Slot ${b.slotIndex + 1} · ${def.rarity}</div>
+          <div class="price">+${coinRefund} 💰${ebRefund ? ` · +${ebRefund} 💎` : ''}</div>
+          <button>Sell</button>
+        `;
+        item.querySelector('button').onclick = () => {
+          SYS.sellBro(p.id, b.instanceId);
+          refreshOpenShop();
+        };
+        list2.appendChild(item);
+      }
+      sec2.appendChild(list2);
+      body.appendChild(sec2);
+    }
   }
 
   function renderPetShop(body, p) {

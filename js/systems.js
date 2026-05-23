@@ -241,11 +241,59 @@ Game.SYS = (() => {
     }
     p.coins -= def.cost;
     assignBroToSlot(b, p.baseId, slot, p.id);
+    const ebReward = rarityEbReward(def.rarity);
+    if (ebReward > 0) {
+      p.emoBucks += ebReward;
+      if (!p.isAI) S.notice(`Rare catch! +${ebReward} 💎`, 'rare');
+    }
     if (!p.isAI) {
       S.notice(`Bought ${def.name}!`, 'success');
       S.effect('sparkle', { x: b.x, y: b.y });
     }
     return { ok: true };
+  }
+
+  // Diamonds awarded when you acquire a rare-or-better bro (buy or lucky-roll).
+  function rarityEbReward(rarity) {
+    switch (rarity) {
+      case 'Rare':    return 2;
+      case 'Epic':    return 5;
+      case 'Secret':  return 15;
+      default:        return 0;
+    }
+  }
+
+  // Diamonds + coins refund when selling a bro out of your base.
+  function sellBro(playerId, broInstanceId) {
+    const p = S.playerById(playerId);
+    const b = S.broById(broInstanceId);
+    if (!p || !b) return { ok: false };
+    if (b.ownerId !== p.id) return { ok: false, reason: 'not-yours' };
+    if (b.state !== 'in_slot') return { ok: false, reason: 'busy' };
+    if (b.isGuard) return { ok: false, reason: 'is-guard' };
+    const def = broDef(b.defId);
+    // 10% of cost rounded, or a small floor for evolved bros (cost=0)
+    const coinRefund = Math.max(10, Math.floor((def.cost || 100) * 0.1));
+    const ebRefund = sellEbAmount(def.rarity);
+    p.coins += coinRefund;
+    p.emoBucks += ebRefund;
+    // free the slot
+    S.baseById(p.baseId).slots[b.slotIndex] = null;
+    S.removeBro(b.instanceId);
+    if (!p.isAI) {
+      const ebPart = ebRefund > 0 ? ` and +${ebRefund} 💎` : '';
+      S.notice(`Sold ${def.name} for +${coinRefund} 💰${ebPart}`, 'gold');
+    }
+    return { ok: true, coinRefund, ebRefund };
+  }
+
+  function sellEbAmount(rarity) {
+    switch (rarity) {
+      case 'Rare':    return 1;
+      case 'Epic':    return 3;
+      case 'Secret':  return 10;
+      default:        return 0;
+    }
   }
 
   function assignBroToSlot(b, baseId, slotIndex, ownerId) {
@@ -513,6 +561,12 @@ Game.SYS = (() => {
     // pick a random bro of that rarity (spawnable, not evolved)
     const pool = CFG.BROS.filter(b => b.rarity === rarity && !b.evolved);
     const pick = pool[Math.floor(Math.random() * pool.length)] || CFG.BROS[0];
+    // EB reward for high-rarity rolls
+    const ebReward = rarityEbReward(rarity);
+    if (ebReward > 0) {
+      p.emoBucks += ebReward;
+      if (!p.isAI) S.notice(`Lucky! +${ebReward} 💎`, 'rare');
+    }
     // Add to base if room
     const slot = S.emptySlot(p.baseId);
     if (slot === -1) {
@@ -594,7 +648,11 @@ Game.SYS = (() => {
     const st = S.get();
     st.nextEventAt -= dt;
     if (st.currentEvent && st.time > st.currentEventUntil) {
+      // Award 2 💎 to every player as a participation bonus
+      const endedId = st.currentEvent;
       st.currentEvent = null;
+      for (const pl of st.players) pl.emoBucks += 2;
+      S.notice(`Event ended — +2 💎 for everyone!`, 'gold');
     }
     if (st.nextEventAt <= 0 && !st.currentEvent) {
       const ev = CFG.EVENTS[Math.floor(Math.random() * CFG.EVENTS.length)];
@@ -749,7 +807,7 @@ Game.SYS = (() => {
     tick,
     // actions
     interact, swingMace, teleportHome, toggleBaseLock,
-    buyBro, attemptSteal, makeGuard, attemptEvolve,
+    buyBro, sellBro, attemptSteal, makeGuard, attemptEvolve,
     buyLuckyBlock, rollLuckyBlock,
     buyShopItem, buyPet, buyMount, speedUpNextEvent,
     canSpin, doSpin, applyPayout,
