@@ -75,9 +75,15 @@ Game.CFG = (() => {
     { id: 'ninja',   name: 'Ninja Bro',  rarity: 'Epic',     cost: 5000,  mps: 160, emoji: '🥷', color: '#7c3aed' },
     { id: 'secret',  name: 'Secret Bro', rarity: 'Secret',   cost: 25000, mps: 500, emoji: '👽', color: '#ec4899' },
     // Evolved tiers (not spawned, only via evolution / lucky)
-    { id: 'super_basic', name: 'Super Basic Bro', rarity: 'Uncommon', cost: 0, mps: 6,   emoji: '😇', color: '#10b981', evolved: true },
-    { id: 'mega_cool',   name: 'Mega Cool Bro',   rarity: 'Rare',     cost: 0, mps: 32,  emoji: '🤩', color: '#3b82f6', evolved: true },
-    { id: 'ultra_mega',  name: 'Ultra Mega Bro',  rarity: 'Epic',     cost: 0, mps: 140, emoji: '👨‍🚀',color: '#a855f7', evolved: true },
+    { id: 'super_basic',  name: 'Super Basic Bro',  rarity: 'Uncommon', cost: 0, mps: 6,    emoji: '😇', color: '#10b981', evolved: true },
+    { id: 'super_silly',  name: 'Super Silly Bro',  rarity: 'Uncommon', cost: 0, mps: 12,   emoji: '🤡', color: '#34d399', evolved: true },
+    { id: 'mega_cool',    name: 'Mega Cool Bro',    rarity: 'Rare',     cost: 0, mps: 32,   emoji: '🤩', color: '#3b82f6', evolved: true },
+    { id: 'super_happy',  name: 'Super Happy Bro',  rarity: 'Rare',     cost: 0, mps: 50,   emoji: '🥳', color: '#3b82f6', evolved: true },
+    { id: 'super_rich',   name: 'Super Rich Bro',   rarity: 'Epic',     cost: 0, mps: 100,  emoji: '🤴', color: '#a855f7', evolved: true },
+    { id: 'ultra_mega',   name: 'Ultra Mega Bro',   rarity: 'Epic',     cost: 0, mps: 140,  emoji: '👨‍🚀',color: '#a855f7', evolved: true },
+    { id: 'arch_wizard',  name: 'Archwizard Bro',   rarity: 'Epic',     cost: 0, mps: 320,  emoji: '🧝', color: '#7c3aed', evolved: true },
+    { id: 'shadow_ninja', name: 'Shadow Ninja Bro', rarity: 'Secret',   cost: 0, mps: 520,  emoji: '🦹', color: '#ec4899', evolved: true },
+    { id: 'ultra_secret', name: 'Ultra Secret Bro', rarity: 'Secret',   cost: 0, mps: 1700, emoji: '👾', color: '#f59e0b', evolved: true },
   ];
   const BROS_BY_ID = Object.fromEntries(BROS.map(b => [b.id, b]));
 
@@ -87,11 +93,17 @@ Game.CFG = (() => {
   };
 
   /* ============== EVOLUTION RECIPES ============== */
-  // 3 of input bro id -> output bro id (costs coins)
+  // 3 of input bro id -> output bro id (costs coins). Cost scales with rarity.
   const EVOLUTIONS = [
-    { input: 'basic', output: 'super_basic', cost: 100 },
-    { input: 'cool',  output: 'mega_cool',   cost: 1000 },
-    { input: 'mega',  output: 'ultra_mega',  cost: 5000 },
+    { input: 'basic',  output: 'super_basic',  cost: 100 },
+    { input: 'silly',  output: 'super_silly',  cost: 300 },
+    { input: 'cool',   output: 'mega_cool',    cost: 1000 },
+    { input: 'happy',  output: 'super_happy',  cost: 1600 },
+    { input: 'rich',   output: 'super_rich',   cost: 3000 },
+    { input: 'mega',   output: 'ultra_mega',   cost: 5000 },
+    { input: 'wizard', output: 'arch_wizard',  cost: 15000 },
+    { input: 'ninja',  output: 'shadow_ninja', cost: 25000 },
+    { input: 'secret', output: 'ultra_secret', cost: 100000 },
   ];
 
   /* ============== PETS ============== */
